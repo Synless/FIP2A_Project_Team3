@@ -23,6 +23,7 @@ void setup() {
   // put your setup code here, to run once:
   SerialUSB.begin(115200);
   c.init();
+  //while(!SerialUSB);
   c.display.println("press A to start");
 
   while (!c.A.isPressed());
@@ -118,6 +119,10 @@ void startWifiServer()
 
   c.display.println("Server config ok");
 
+
+  uint32_t blinktimer = 0;
+  bool b = 0;
+
   while (1)
   {
     wifiDirectSerialMode();
@@ -129,9 +134,9 @@ void startWifiServer()
       c.display.print("Ping : ");
       while (!WIFI_SERIAL.available());
       uint32_t timer = millis();
-      while (WIFI_SERIAL.read() != '+' && millis() - timer < 1000);
+      while (WIFI_SERIAL.read() != '+' && millis() - timer < 500);
       timer = millis();
-      while (WIFI_SERIAL.read() != '+' && millis() - timer < 1000);
+      while (WIFI_SERIAL.read() != '+' && millis() - timer < 500);
 
       int integer = WIFI_SERIAL.parseInt();
       if (integer > 0)
@@ -139,8 +144,22 @@ void startWifiServer()
       else
         c.display.println("Timeout");
 
-      //serverSend("hello world");
+
     }
+
+    //send "hello world" to other device if button B is pressed.
+    if (c.B.isPressed() && c.B.justPressed())
+      serverSend("hello world");
+
+
+    //proof that the code is running
+    if (millis() - blinktimer > 500)
+    {
+      blinktimer = millis();
+      b = !b;
+      digitalWrite(13, b);
+    }
+
 
   }
 }
@@ -223,9 +242,20 @@ void startWifiClient()
 
   c.display.println("Client config ok");
 
+  uint32_t blinktimer = 0;
+  bool b = 0;
+
   while (1)
   {
     wifiDirectSerialMode();
+
+    //proof that the code is running
+    if (millis() - blinktimer > 500)
+    {
+      blinktimer = millis();
+      b = !b;
+      digitalWrite(13, b);
+    }
   }
 }
 
