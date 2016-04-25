@@ -52,7 +52,7 @@ void setup() {
 #else
   configBluetoothMaster();
 #endif
-  Serial1.begin(38400);
+  Serial1.begin(115200);
 
   //on attends que le moniteur série coté PC soit ouver
   while (!SerialUSB);
@@ -113,7 +113,9 @@ void configBluetoothMaster()
   delay(500);
   Serial1.println("AT+INQ");
   delay(500);
-  Serial1.println("AT+LINK=2015,12,148184");
+  Serial1.println("AT+LINK=2016,2,164200"); ////+ADDR:2016:2:164200    //2015,12,148184
+  delay(500);
+  Serial1.println("AT+UART=115200,1,0");
   delay(500);
 
   while (Serial1.find("FAIL"))
@@ -143,6 +145,8 @@ void configBluetoothSlave()
   Serial1.println("AT+PSWD=0000");
   delay(500);
   Serial1.println("AT+ROLE=0");
+  delay(500);
+  Serial1.println("AT+UART=115200,1,0");
   delay(500);
 
   while (Serial1.available())
