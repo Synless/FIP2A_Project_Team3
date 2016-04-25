@@ -79,7 +79,7 @@ void loop() {
       digitalWrite(12, LOW);
       delay(100);
       digitalWrite(12, HIGH);
-      Serial1.begin(38400);
+      Serial1.begin(115200);
       SerialUSB.println("\nTX/RX MODE");
     }
     else
