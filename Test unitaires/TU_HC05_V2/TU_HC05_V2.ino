@@ -1,6 +1,7 @@
 //#define CONF
 #define MASTER 0
 #define SLAVE  1
+#define MODE MASTER
 
 //adresse de l'esclave :
 //AT+ADDR
@@ -8,8 +9,6 @@
 
 //adresse du maitre :
 //+ADDR:2016:2:164200
-
-bool mode = SLAVE;
 
 void setup() {
 
@@ -48,11 +47,12 @@ void setup() {
   */
   Serial1.begin(38400);
 
-#ifndef CONF
+#if MODE //slave
   configBluetoothSlave();
-  Serial1.begin(38400);
+#else
+  configBluetoothMaster();
 #endif
-
+  Serial1.begin(38400);
 
   //on attends que le moniteur série coté PC soit ouver
   while (!SerialUSB);
@@ -94,6 +94,8 @@ void loop() {
 
 void configBluetoothMaster()
 {
+  SerialUSB.print("Configuring master...");
+
   digitalWrite(13, HIGH);
   Serial1.println("AT+ORGL");
   delay(500);
@@ -114,7 +116,7 @@ void configBluetoothMaster()
   Serial1.println("AT+LINK=2015,12,148184");
   delay(500);
 
-  while(Serial1.find("FAIL"))
+  while (Serial1.find("FAIL"))
   {
     SerialUSB.println("Can't connect to slave : AT+LINK return FAIL");
   }
@@ -126,10 +128,13 @@ void configBluetoothMaster()
   delay(100);
   digitalWrite(12, HIGH);
   digitalWrite(13, LOW);
+
+  SerialUSB.println("OK");
 }
 
 void configBluetoothSlave()
 {
+  SerialUSB.print("Configuring slave...");
   digitalWrite(13, HIGH);
   Serial1.println("AT+ORGL");
   delay(500);
@@ -148,5 +153,8 @@ void configBluetoothSlave()
   delay(100);
   digitalWrite(12, HIGH);
   digitalWrite(13, LOW);
+
+  SerialUSB.println("OK");
+
 }
 
