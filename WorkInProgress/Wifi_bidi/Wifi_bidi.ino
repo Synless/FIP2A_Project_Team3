@@ -2,11 +2,16 @@
 #include <Wire.h>
 #include <Oleduino.h>
 
+//not used
 String MASTER_SSID =     "WIFI_MASTER";
 String MASTER_PASSWD =   "wifiserver";
 String MASTER_IP =       "192.168.111.1";
 String SLAVE_IP =        "192.168.111.2";
 String SERVER_PORT =     "234";
+
+#define WIFI_ROLE_SLAVE  0
+#define WIFI_ROLE_MASTER 1
+#define WIFI_ROLE WIFI_ROLE_MASTER
 
 #define WIFI_SERIAL Serial
 
@@ -17,13 +22,20 @@ boolean toggleRX = true, toggleTX = true;
 void setup() {
   // put your setup code here, to run once:
   SerialUSB.begin(115200);
-  while (!SerialUSB);
   c.init();
+  c.display.println("press A to start");
+
+  while (!c.A.isPressed());
+  //while (!SerialUSB);
+  c.display.println("Start config");
 
   SerialUSB.println("Start program\n");
 
+#if WIFI_ROLE
   startWifiServer();
-  //startWifiClient();
+#else
+  startWifiClient();
+#endif
 
 
 
@@ -35,9 +47,6 @@ void loop() {
 }
 
 
-#define WIFI_ROLE_SLAVE  0
-#define WIFI_ROLE_MASTER 1
-#define WIFI_ROLE WIFI_ROLE_MASTER
 
 /*WIFI SERVER
    - the master is the AP : SSID = "WIFI_MASTER" PASSWD="wifiserver"
@@ -107,6 +116,7 @@ void startWifiServer()
     SerialUSB.println("WIFI >>> CONFIGURATION SERVER: FAIL");
   SerialUSB.println("***********************************");
 
+  c.display.println("Server config ok");
 
   while (1)
   {
@@ -116,17 +126,20 @@ void startWifiServer()
       WIFI_SERIAL.println("AT+PING=\"192.168.111.2\"");
       c.display.fillScreen(0);
       c.display.setCursor(0, 0);
-      delay(100);
-      while (WIFI_SERIAL.read() != '+');
-      while (WIFI_SERIAL.read() != '+');
+      c.display.print("Ping : ");
+      while (!WIFI_SERIAL.available());
+      uint32_t timer = millis();
+      while (WIFI_SERIAL.read() != '+' && millis() - timer < 1000);
+      timer = millis();
+      while (WIFI_SERIAL.read() != '+' && millis() - timer < 1000);
 
       int integer = WIFI_SERIAL.parseInt();
-      if (integer != 0)
-        c.display.print(integer);
+      if (integer > 0)
+        c.display.println(integer);
       else
-        c.display.print("Timeout");
+        c.display.println("Timeout");
 
-      serverSend("hello world");
+      //serverSend("hello world");
     }
 
   }
@@ -207,6 +220,8 @@ void startWifiClient()
   else
     SerialUSB.println("WIFI >>> CONFIGURATION : FAIL");
   SerialUSB.println("***********************************");
+
+  c.display.println("Client config ok");
 
   while (1)
   {
