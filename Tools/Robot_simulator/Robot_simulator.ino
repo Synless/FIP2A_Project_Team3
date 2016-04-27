@@ -1,12 +1,12 @@
-// demo: CAN-BUS Shield, send data
 #include <mcp_can.h>
 #include <SPI.h>
 
-// the cs pin of the version after v1.1 is default to D9
-// v0.9b and v1.0 is default D10
+
+/*Arduino board + SeedStudio Can Shield are necessary to simulate the robot behaviour*/
+
 const int SPI_CS_PIN = 9;
 
-MCP_CAN CAN(SPI_CS_PIN);                                    // Set CS pin
+MCP_CAN CAN(SPI_CS_PIN);       // Set CS pin
 
 void setup()
 {
@@ -34,7 +34,7 @@ void loop()
     stmp[a] = i;
   stmp[7] = random(0xFF);
 
-  // send data:  id = 0x00, standrad frame, data len = 8, stmp: data buf
+  // send data:  ID=i, standrad frame, data len = 8, stmp: data buf
   CAN.sendMsgBuf(i, 0, 8, stmp);
 
   if (CAN_MSGAVAIL == CAN.checkReceive())  // check if CAN data available
@@ -52,9 +52,5 @@ void loop()
       }
     }
   }
-  delay(3);                       // send data per 100ms
+  delay(3);
 }
-
-/*********************************************************************************************************
-  END FILE
-*********************************************************************************************************/

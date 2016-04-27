@@ -1,7 +1,7 @@
 //#define CONF
 #define MASTER 0
 #define SLAVE  1
-#define MODE MASTER
+#define MODE SLAVE
 
 //adresse de l'esclave :
 //AT+ADDR

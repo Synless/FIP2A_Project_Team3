@@ -15,20 +15,20 @@ String SERVER_PORT =     "234";
 
 #define WIFI_SERIAL Serial
 
-Oleduino c;
+Oleduino console;
 
 boolean toggleRX = true, toggleTX = true;
 
 void setup() {
   // put your setup code here, to run once:
   SerialUSB.begin(115200);
-  c.init();
+  console.init();
   //while(!SerialUSB);
-  c.display.println("press A to start");
+  console.display.println("press A to start");
 
-  while (!c.A.isPressed());
+  while (!console.A.isPressed());
   //while (!SerialUSB);
-  c.display.println("Start config");
+  console.display.println("Start config");
 
   SerialUSB.println("Start program\n");
 
@@ -117,7 +117,7 @@ void startWifiServer()
     SerialUSB.println("WIFI >>> CONFIGURATION SERVER: FAIL");
   SerialUSB.println("***********************************");
 
-  c.display.println("Server config ok");
+  console.display.println("Server config ok");
 
 
   uint32_t blinktimer = 0;
@@ -126,12 +126,12 @@ void startWifiServer()
   while (1)
   {
     wifiDirectSerialMode();
-    if (c.C.isPressed() && c.C.justPressed())
+    if (console.C.isPressed() && console.C.justPressed())
     {
       WIFI_SERIAL.println("AT+PING=\"192.168.111.2\"");
-      c.display.fillScreen(0);
-      c.display.setCursor(0, 0);
-      c.display.print("Ping : ");
+      console.display.fillScreen(0);
+      console.display.setCursor(0, 0);
+      console.display.print("Ping : ");
       while (!WIFI_SERIAL.available());
       uint32_t timer = millis();
       while (WIFI_SERIAL.read() != '+' && millis() - timer < 500);
@@ -140,15 +140,15 @@ void startWifiServer()
 
       int integer = WIFI_SERIAL.parseInt();
       if (integer > 0)
-        c.display.println(integer);
+        console.display.println(integer);
       else
-        c.display.println("Timeout");
+        console.display.println("Timeout");
 
 
     }
 
     //send "hello world" to other device if button B is pressed.
-    if (c.B.isPressed() && c.B.justPressed())
+    if (console.B.isPressed() && console.B.justPressed())
       serverSend("hello world");
 
 
@@ -240,7 +240,7 @@ void startWifiClient()
     SerialUSB.println("WIFI >>> CONFIGURATION : FAIL");
   SerialUSB.println("***********************************");
 
-  c.display.println("Client config ok");
+  console.display.println("Client config ok");
 
   uint32_t blinktimer = 0;
   bool b = 0;
@@ -299,6 +299,10 @@ bool wifiSendWaitAck(char * cmd, char * validation, int timeout, int retry)
 
 void serverSend(String msg)
 {
+  SerialUSB.println("Sending : " + msg);
+  SerialUSB.print("String length : ");
+  SerialUSB.println(msg.length());
+
   WIFI_SERIAL.print("AT+CIPSEND=0,"); //assume connection ID is 0
   WIFI_SERIAL.println(msg.length());
   while (WIFI_SERIAL.read() != '>'); //wait for prompt
@@ -308,11 +312,68 @@ void serverSend(String msg)
 void wifiDirectSerialMode()
 {
   //get data from wifi module, send to computer
+  //processIncomingData();
   if (WIFI_SERIAL.available())
     SerialUSB.write(WIFI_SERIAL.read());
   //send data from computer to wifi module
   if (SerialUSB.available())
     WIFI_SERIAL.write(SerialUSB.read());
+}
+
+void processIncomingData()
+{
+  char c;
+  if (WIFI_SERIAL.available()>3)
+  {
+    c = WIFI_SERIAL.read();
+    if (c == '+')
+    {
+      if (WIFI_SERIAL.available())
+      {
+        c = WIFI_SERIAL.read();
+        if (c == 'I')
+        {
+          if (WIFI_SERIAL.available())
+          {
+            c = WIFI_SERIAL.read();
+            if (c == 'P')
+            {
+              if (WIFI_SERIAL.available())
+              {
+                c = WIFI_SERIAL.read();
+                if (c == 'D')
+                {
+                  if (WIFI_SERIAL.available())
+                  {
+                    c = WIFI_SERIAL.read();
+                    if (c == ',')
+                    {
+                      int msgSize = WIFI_SERIAL.parseInt();
+                      WIFI_SERIAL.read(); //discard ':'
+                      SerialUSB.println("Received a message of " + String(msgSize) + " bytes");
+                      String s = WIFI_SERIAL.readString();
+                      SerialUSB.println(s);
+                      console.display.println(s);
+                    }
+                    else
+                      SerialUSB.print(c);
+                  }
+                }
+                else
+                  SerialUSB.print(c);
+              }
+            }
+            else
+              SerialUSB.print(c);
+          }
+        }
+        else
+          SerialUSB.print(c);
+      }
+    }
+    else
+      SerialUSB.print(c);
+  }
 }
 
 String wifiGetLocalIP()
