@@ -8,6 +8,7 @@ DMA dma;
 MCP_CAN CAN(7);    // Set CS pin
 Oleduino console;
 
+
 String strBuffer[16];
 uint8_t dataBuffer[16][8] = {0x00};
 uint8_t canSendBuffer[8]; //to send data on the can bus
@@ -16,7 +17,7 @@ uint8_t receiveBuffer[3]; //to get data from BT
 uint32_t dispTimer = 0;
 bool connection = false;
 
-bool debug = true; //if debug is true, you MUST keep serial port open for normal operation
+bool debug = false; //if debug is true, you MUST keep serial port open for normal operation
 
 bool rxState = 0, txState = 0;
 
@@ -40,9 +41,9 @@ uint8_t idCntBuffer[16][3] = // ID (0..0xFF),COUNT (0x01..0xFF),counter (init at
   {0xAB, 11, 0},
   {0xBC, 12, 0},
   {0xCD, 13, 0},
-  {0xDE, 14, 0},
-  {0xEF, 15, 0},
-  {0xF8, 15, 0}
+  {0xDE, 2, 0},
+  {0xEF, 2, 0},
+  {0xF8, 2, 0}
 };
 
 void setup()
@@ -184,7 +185,7 @@ void loop()
     renderScreen(numbers, 272, BLACK);
 
 
-    
+
   }
 
 
@@ -214,47 +215,63 @@ void loop()
         if (receiveBuffer[0] & 0x04)
         {
           //is button A is pressed
+
           if (debug)SerialUSB.println("BUTTON A IS PRESSED ON REMOTE");
-          if (debug)SerialUSB.println(receiveBuffer[0], BIN);
-          
           // send data:  id = 0x00, standrad frame, data len = 8, stmp: data buf
-          canSendBuffer[0]=0x02;
-          canSendBuffer[1]=(receiveBuffer[0] & 0x02)?0xFF:0x00;
-          canSendBuffer[2]=0x41;
-          CAN.sendMsgBuf(0x07A4, 0, 3, canSendBuffer);
-
-
-
+          canSendBuffer[0] = 0x01;
+          canSendBuffer[1] = 0x0A;
+          CAN.sendMsgBuf(0x07A4, 0, 2, canSendBuffer);
         }
         if (receiveBuffer[0] & 0x02)
         {
           //is button B is pressed
           if (debug)SerialUSB.println("BUTTON B IS PRESSED ON REMOTE");
+          // send data:  id = 0x00, standrad frame, data len = 8, stmp: data buf
+          canSendBuffer[0] = 0x01;
+          canSendBuffer[1] = 0x0B;
+
+          CAN.sendMsgBuf(0x07A4, 0, 2, canSendBuffer);
         }
         if (receiveBuffer[0] & 0x01)
         {
           //is button C is pressed
           if (debug)SerialUSB.println("BUTTON C IS PRESSED ON REMOTE");
+          canSendBuffer[0] = 0x01;
+          canSendBuffer[1] = 0x0C;
+
+          CAN.sendMsgBuf(0x07A4, 0, 2, canSendBuffer);
         }
 
         //receiveBuffer[1] = X joystick value, 128 is center, approx. 0 is left, 128 right
         if (receiveBuffer[1] > 128 + 0x0F)
         {
           if (debug)SerialUSB.println("JOYSTICK RIGHT : " + String(receiveBuffer[1]));
+          canSendBuffer[0] = 0x01;
+          canSendBuffer[1] = 0xF0;
+          CAN.sendMsgBuf(0x07A4, 0, 2, canSendBuffer);
         }
         else if (receiveBuffer[1] < 128 - 0x0F)
         {
           if (debug)SerialUSB.println("JOYSTICK LEFT : " + String(receiveBuffer[1]));
+          canSendBuffer[0] = 0x01;
+          canSendBuffer[1] = 0xF1;
+          CAN.sendMsgBuf(0x07A4, 0, 2, canSendBuffer);
         }
 
         //receiveBuffer[2] = Y joystick value, 128 is center, approx. 0 is up, 128 down
         if (receiveBuffer[2] > 128 + 0x0F)
         {
           if (debug)SerialUSB.println("JOYSTICK DOWN : " + String(receiveBuffer[2]));
+          canSendBuffer[0] = 0x01;
+          canSendBuffer[1] = 0xF2;
+          CAN.sendMsgBuf(0x07A4, 0, 2, canSendBuffer);
         }
         else if (receiveBuffer[2] < 128 - 0x0F)
         {
           if (debug)SerialUSB.println("JOYSTICK UP : " +  String(receiveBuffer[2]));
+          canSendBuffer[0] = 0x01;
+          canSendBuffer[1] = 0xF3;
+          CAN.sendMsgBuf(0x07A4, 0, 2, canSendBuffer);
         }
       }
     }
