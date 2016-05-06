@@ -5,7 +5,7 @@
 #define DELAY1 500
 #define KEY A4
 #define RS_HC 12
-#define DEBUG 0
+#define DEBUG 1
 
 #include <Oleduino.h>
 #include <SPIdma.h>
@@ -24,16 +24,13 @@ Oleduino console;
 
 bool state = false;
 uint32_t error = 0;
-
 uint8_t dataBuffer[16][8] = {0};
 SpriteInst numbers[272];
-
 uint32_t ti = 0;
 uint32_t cmpt = 0;
 bool connection_OK = false;
 uint32_t connection_timeout = 0;
 bool already_connected = false;
-
 String strBuffer[16];
 uint32_t dispTimer = 0;
 uint32_t dispTimer2 = 0;
@@ -89,8 +86,8 @@ void setup()
 
   console.init();
   dma.init();
-
   initHexSprites();
+  
   renderScreen(numbers, 272, RED);
 
   digitalWrite(RS_HC, LOW);
@@ -161,7 +158,7 @@ void loop()
 
     already_connected = true;
 
-    if (b == '?')
+    if (b == '?')       // Si le master envoi '?' l'esclave doit renvoyer 'A' pour confirmer que la connection est encore active
     {
       Serial1.print('A'); // Commande envoyee au master ACKNOWLEDGE
       if (DEBUG)
@@ -173,7 +170,7 @@ void loop()
 
     }
 
-    if (b == '!')
+    if (b == '!')       // caractere '!' signifie un début de transmission 
     {
       cmpt++;
       while (!Serial1.available());
@@ -206,16 +203,22 @@ void loop()
           SerialUSB.print(data[i], HEX);
       }
 
-      for (int k = 0; k < 16; k++) {
-        if (idDisplayBuffer[k][0] == data[0]) {
-          dataBuffer[k][0] = data[0];
+      for (int k = 0; k < 16; k++) 
+      {
+        if (idDisplayBuffer[k][0] == data[0]) 
+        {
+          for(int n = 0; n<8 ; n++)
+          {
+            dataBuffer[k][n] = data[n];
+          }
+          /*dataBuffer[k][0] = data[0];
           dataBuffer[k][1] = data[1];
           dataBuffer[k][2] = data[2];
           dataBuffer[k][3] = data[3];
           dataBuffer[k][4] = data[4];
           dataBuffer[k][5] = data[5];
           dataBuffer[k][6] = data[6];
-          dataBuffer[k][7] = data[7];
+          dataBuffer[k][7] = data[7];*/
         }
       }
 
@@ -272,7 +275,7 @@ void loop()
   }
 
 
-  if (millis() - buttonTimer > 500)
+  if (millis() - buttonTimer > 250)
   {
     buttonTimer = millis();
 

@@ -55,7 +55,7 @@ void setup() {
   Serial1.begin(115200);
 
   //on attends que le moniteur série coté PC soit ouver
-  while (!SerialUSB);
+  //while (!SerialUSB);
 
 }
 

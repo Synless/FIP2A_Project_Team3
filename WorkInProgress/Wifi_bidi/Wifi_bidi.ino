@@ -1,5 +1,3 @@
-#include <SPI.h>
-#include <Wire.h>
 #include <Oleduino.h>
 
 //not used
@@ -11,9 +9,13 @@ String SERVER_PORT =     "234";
 
 #define WIFI_ROLE_SLAVE  0
 #define WIFI_ROLE_MASTER 1
-#define WIFI_ROLE WIFI_ROLE_MASTER
+#define WIFI_ROLE WIFI_ROLE_SLAVE
 
 #define WIFI_SERIAL Serial
+#define MSG_SIZE 12
+char inMsg[MSG_SIZE] = {0};
+
+bool debug = true;
 
 Oleduino console;
 
@@ -148,8 +150,11 @@ void startWifiServer()
     }
 
     //send "hello world" to other device if button B is pressed.
-    if (console.B.isPressed() && console.B.justPressed())
-      serverSend("hello world");
+    if (console.B.isPressed() ) //&& console.B.justPressed()
+      serverSend("hello world!");
+
+    if (console.A.isPressed() && console.A.justPressed())
+      showStatus();
 
 
     //proof that the code is running
@@ -249,6 +254,10 @@ void startWifiClient()
   {
     wifiDirectSerialMode();
 
+    if (console.A.isPressed() && console.A.justPressed())
+      showStatus();
+
+
     //proof that the code is running
     if (millis() - blinktimer > 500)
     {
@@ -299,14 +308,18 @@ bool wifiSendWaitAck(char * cmd, char * validation, int timeout, int retry)
 
 void serverSend(String msg)
 {
-  SerialUSB.println("Sending : " + msg);
-  SerialUSB.print("String length : ");
-  SerialUSB.println(msg.length());
+  if (debug)SerialUSB.println("Sending : " + msg);
+  if (debug)SerialUSB.print("String length : ");
+  if (debug)SerialUSB.println(msg.length());
 
   WIFI_SERIAL.print("AT+CIPSEND=0,"); //assume connection ID is 0
   WIFI_SERIAL.println(msg.length());
-  while (WIFI_SERIAL.read() != '>'); //wait for prompt
-  WIFI_SERIAL.println(msg);
+  uint32_t timeout = millis();
+  while (WIFI_SERIAL.read() != '>' && (millis() - timeout) < 200); //wait for prompt
+  if (millis() - timeout < 200)
+    WIFI_SERIAL.print(msg);
+  else if (debug)
+    SerialUSB.println("Send timeout or error...");
 }
 
 void wifiDirectSerialMode()
@@ -320,10 +333,48 @@ void wifiDirectSerialMode()
     WIFI_SERIAL.write(SerialUSB.read());
 }
 
+const char ipd[5] = {'+', 'I', 'P', 'D', ','};
+
+bool processIncomingServerData()
+{
+  char c;
+  if (WIFI_SERIAL.available())
+  {
+    c = WIFI_SERIAL.read();
+    for (int i = 0; i < 5; i++)
+    {
+      while (!WIFI_SERIAL.available());
+      c = WIFI_SERIAL.read();
+      if (c != ipd[i])
+      {
+        return false; //invalid data from server, give up
+      }
+    }
+  }
+  else
+    return false; //no data available
+
+  //if we go up here, it means we got a message from server
+  int msgSize = WIFI_SERIAL.parseInt();
+
+  if (msgSize != MSG_SIZE)
+    return false;
+
+  for (int i = 0; i < MSG_SIZE; i++)
+  {
+    while (!WIFI_SERIAL.available());
+    inMsg[i] = WIFI_SERIAL.read();
+  }
+  if (inMsg[0] != '!' || inMsg[12] != '#')
+    return false;
+  else
+    return true;
+}
+
 void processIncomingData()
 {
   char c;
-  if (WIFI_SERIAL.available()>3)
+  if (WIFI_SERIAL.available() > 3)
   {
     c = WIFI_SERIAL.read();
     if (c == '+')
@@ -385,4 +436,26 @@ String wifiGetLocalIP()
   return s;
 }
 
+String showStatus(void)
+{
+  WIFI_SERIAL.println("AT+CIPSTATUS");
+  String data = "";
+  unsigned long start;
+  start = millis();
+  while (millis() - start < 3000) {
+    if (WIFI_SERIAL.available())
+    {
+      char a = WIFI_SERIAL.read();
+      data = data + a;
+    }
+    if (data.indexOf("OK") != -1)
+    {
+      break;
+    }
+  }
+  data.replace("AT+CIPSTATUS", "");
+  data.replace("OK", "");
+
+  return data;
+}
 
