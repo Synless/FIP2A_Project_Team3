@@ -56,8 +56,8 @@ private:
 //#define INVERSE_X_JOYSTICK
 //#define INVERSE_Y_JOYSTICK
 
-#define CENTER_X_THRESHOLD 10
-#define CENTER_Y_THRESHOLD 10
+#define CENTER_X_THRESHOLD 100
+#define CENTER_Y_THRESHOLD 100
 
 #define INVERSE_Y_JOYSTICK
 
@@ -117,7 +117,7 @@ public:
     }
     
     float getDirectionRad(void){
-        return atan2(raw_X, raw_Y);
+        return atan2(raw_X-2048, raw_Y-2048);
     }
     uint16_t getAmplitude(void){
         return sqrt(raw_X*raw_X+raw_Y*raw_Y);

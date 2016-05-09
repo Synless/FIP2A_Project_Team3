@@ -5,7 +5,7 @@
 #define DELAY1 500
 #define KEY A4
 #define RS_HC 12
-#define DEBUG 1
+#define DEBUG 0
 
 #include <Oleduino.h>
 #include <SPIdma.h>
